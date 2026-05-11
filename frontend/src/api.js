@@ -1,5 +1,19 @@
-const baseUrl = import.meta.env.VITE_API_BASE || 'http://localhost:4000/api';
+import axios from "axios";
 
+const baseUrl = import.meta.env.VITE_API_BASE;
+
+// =====================
+// AUTH
+// =====================
+export function login(username, password) {
+  return axios
+    .post(`${baseUrl}/api/auth/login`, { username, password })
+    .then(res => res.data);
+}
+
+// =====================
+// GENERIC FETCH WRAPPER
+// =====================
 async function fetchJson(path, options = {}) {
   const { token, ...rest } = options;
   const headers = { ...(rest.headers || {}) };
@@ -9,7 +23,7 @@ async function fetchJson(path, options = {}) {
   }
 
   if (rest.body && !(rest.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
+    headers["Content-Type"] = "application/json";
   }
 
   const response = await fetch(`${baseUrl}${path}`, {
@@ -18,96 +32,94 @@ async function fetchJson(path, options = {}) {
   });
 
   const body = await response.json().catch(() => null);
+
   if (!response.ok) {
-    const error = body || { error: 'Sunucu hatası' };
+    const error = body || { error: "Sunucu hatası" };
     error.status = response.status;
     throw error;
   }
+
   return body;
 }
 
-export function login(username, password) {
-  return fetchJson('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ username, password }),
-  });
-}
+// =====================
+// PERSONS
+// =====================
+export const fetchPersons = (token) =>
+  fetchJson("/kisiler", { token });
 
-export function fetchPersons(token) {
-  return fetchJson('/kisiler', { token });
-}
-
-export function createPerson(name, token) {
-  return fetchJson('/kisiler', {
-    method: 'POST',
+export const createPerson = (name, token) =>
+  fetchJson("/kisiler", {
+    method: "POST",
     token,
     body: JSON.stringify({ name }),
   });
-}
 
-export function fetchSales(token, query = {}) {
+// =====================
+// SALES
+// =====================
+export const fetchSales = (token, query = {}) => {
   const params = new URLSearchParams(query).toString();
   return fetchJson(`/islemler?${params}`, { token });
-}
+};
 
-export function createSale(data, token) {
-  return fetchJson('/islemler', {
-    method: 'POST',
+export const createSale = (data, token) =>
+  fetchJson("/islemler", {
+    method: "POST",
     token,
     body: JSON.stringify(data),
   });
-}
 
-export function updatePayment(saleId, paid, token) {
-  return fetchJson(`/islemler/${saleId}/payment`, {
-    method: 'PATCH',
+export const updatePayment = (saleId, paid, token) =>
+  fetchJson(`/islemler/${saleId}/payment`, {
+    method: "PATCH",
     token,
     body: JSON.stringify({ paid }),
   });
-}
 
-export function fetchReport(date, type, token) {
+// =====================
+// REPORT
+// =====================
+export const fetchReport = (date, type, token) => {
   const params = new URLSearchParams({ date, type }).toString();
   return fetchJson(`/rapor?${params}`, { token });
-}
+};
 
-export function fetchProducts(token) {
-  const result = fetchJson('/urunler', { token });
-  console.log('fetchProducts result:', result);
-  return result;
-}
+// =====================
+// PRODUCTS
+// =====================
+export const fetchProducts = (token) =>
+  fetchJson("/urunler", { token });
 
-export function createProduct(category, name, price, token) {
-  return fetchJson('/urunler', {
-    method: 'POST',
+export const createProduct = (category, name, price, token) =>
+  fetchJson("/urunler", {
+    method: "POST",
     token,
     body: JSON.stringify({ category, name, price }),
   });
-}
 
-export function updateProduct(productId, data, token) {
-  return fetchJson(`/urunler/${productId}`, {
-    method: 'PATCH',
+export const updateProduct = (productId, data, token) =>
+  fetchJson(`/urunler/${productId}`, {
+    method: "PATCH",
     token,
     body: JSON.stringify(data),
   });
-}
 
-export function deleteProduct(productId, token) {
-  return fetchJson(`/urunler/${productId}`, {
-    method: 'DELETE',
+export const deleteProduct = (productId, token) =>
+  fetchJson(`/urunler/${productId}`, {
+    method: "DELETE",
     token,
   });
-}
 
-export function updateProductPrice(productId, price, token) {
-  return updateProduct(productId, { price }, token);
-}
+export const updateProductPrice = (productId, price, token) =>
+  updateProduct(productId, { price }, token);
 
-export function updateBalance(personId, amount, token) {
-  return fetchJson(`/kisiler/${personId}/balance`, {
-    method: 'PATCH',
+// =====================
+// BALANCE
+// =====================
+export const updateBalance = (personId, amount, token) =>
+  fetchJson(`/kisiler/${personId}/balance`, {
+    method: "PATCH",
     token,
     body: JSON.stringify({ amount }),
   });
-}

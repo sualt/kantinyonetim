@@ -24,10 +24,6 @@ app.get('/', (req, res) => res.json({ status: 'ok' }));
 
 // Frontend static files'ı serve et
 const frontendBuildPath = path.join(__dirname, '../frontend/dist');
-app.use(express.static(frontendBuildPath));
-app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendBuildPath, 'index.html'));
-});
 
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
