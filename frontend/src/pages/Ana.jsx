@@ -3,7 +3,7 @@ import KisiDetay from '../components/KisiDetay.jsx';
 import UrunForm from '../components/UrunForm.jsx';
 import ProductPrices from '../components/ProductPrices.jsx';
 
-export default function Ana({ persons, selectedPerson, sales, products, onSelectPerson, onAddPerson, onAddSale, onTogglePayment, onUpdateBalance, onCreateProduct, onUpdateProduct, onDeleteProduct }) {
+export default function Ana({ persons, selectedPerson, sales, products, onSelectPerson, onAddPerson, onAddSale, onTogglePayment, onUpdateBalance, onCreateProduct, onUpdateProduct, onDeleteProduct, onRefreshProducts }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
@@ -38,6 +38,7 @@ export default function Ana({ persons, selectedPerson, sales, products, onSelect
           onCreateProduct={onCreateProduct}
           onUpdateProduct={onUpdateProduct}
           onDeleteProduct={onDeleteProduct}
+          onRefreshProducts={onRefreshProducts}
         />
       </div>
     </div>

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 export default function Login({ onLogin, error }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('kantin123');
 
   const handleSubmit = (event) => {
     event.preventDefault();

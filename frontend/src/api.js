@@ -19,7 +19,9 @@ async function fetchJson(path, options = {}) {
 
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    throw body || { error: 'Sunucu hatası' };
+    const error = body || { error: 'Sunucu hatası' };
+    error.status = response.status;
+    throw error;
   }
   return body;
 }

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
-export default function ProductPrices({ products, onCreateProduct, onUpdateProduct, onDeleteProduct }) {
+export default function ProductPrices({ products, onCreateProduct, onUpdateProduct, onDeleteProduct, onRefreshProducts }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [editForm, setEditForm] = useState({ category: '', name: '', price: '' });
   const [newProduct, setNewProduct] = useState({ category: '', name: '', price: '' });
@@ -54,28 +54,35 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
     }
 
     try {
-      // Tüm alanları her zaman gönder — sadece değişenleri değil
+      console.log('Updating product:', selectedProduct.id, { category, name, price });
       await onUpdateProduct(selectedProduct.id, { category, name, price });
+      console.log('Product updated, refreshing...');
+      if (onRefreshProducts) await onRefreshProducts();
       flash('Ürün güncellendi.');
       setSelectedProduct(null);
       setEditForm({ category: '', name: '', price: '' });
-    } catch {
-      flash('Güncelleme başarısız.', false);
+    } catch (err) {
+      console.error('Error updating product:', err);
+      flash('Güncelleme başarısız: ' + (err?.error || err?.message || 'Bilinmeyen hata'), false);
     }
-  }, [selectedProduct, editForm, onUpdateProduct]);
+  }, [selectedProduct, editForm, onUpdateProduct, onRefreshProducts]);
 
   const handleDeleteProduct = useCallback(async () => {
     if (!selectedProduct || !onDeleteProduct) return;
     if (!window.confirm(`"${selectedProduct.name}" silinsin mi?`)) return;
     try {
+      console.log('Deleting product:', selectedProduct.id);
       await onDeleteProduct(selectedProduct.id);
+      console.log('Product deleted, refreshing...');
+      if (onRefreshProducts) await onRefreshProducts();
       flash('Ürün silindi.');
       setSelectedProduct(null);
       setEditForm({ category: '', name: '', price: '' });
-    } catch {
-      flash('Silme başarısız.', false);
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      flash('Silme başarısız: ' + (err?.error || err?.message || 'Bilinmeyen hata'), false);
     }
-  }, [selectedProduct, onDeleteProduct]);
+  }, [selectedProduct, onDeleteProduct, onRefreshProducts]);
 
   const handleCreateProduct = useCallback(async () => {
     const category = newProduct.category.trim();
@@ -88,14 +95,18 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
     }
 
     try {
+      console.log('Creating product:', { category, name, price });
       await onCreateProduct(category, name, price);
+      console.log('Product created, refreshing...');
+      if (onRefreshProducts) await onRefreshProducts();
       setNewProduct({ category: '', name: '', price: '' });
       flash('Ürün eklendi.');
       setMode('edit');
-    } catch {
-      flash('Ekleme başarısız.', false);
+    } catch (err) {
+      console.error('Error creating product:', err);
+      flash('Ekleme başarısız: ' + (err?.error || err?.message || 'Bilinmeyen hata'), false);
     }
-  }, [newProduct, onCreateProduct]);
+  }, [newProduct, onCreateProduct, onRefreshProducts]);
 
   return (
     <div className="product-panel">
@@ -120,6 +131,15 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
           >
             + Yeni Ürün
           </button>
+          {onRefreshProducts && (
+            <button
+              type="button"
+              className="mode-tab"
+              onClick={onRefreshProducts}
+            >
+              Yenile
+            </button>
+          )}
         </div>
       </div>
 

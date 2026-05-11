@@ -6,23 +6,37 @@
 
 /* ─── Tokens ─────────────────────────────────────────────── */
 :root {
-  --court:    #2d5a27;   /* koyu yeşil — kort zemini */
-  --court-mid:#3a7a32;
-  --court-lt: #e8f5e4;
-  --clay:     #c0622a;   /* kırmızı kil */
-  --clay-lt:  #fdf0e8;
-  --gold:     #b8922a;
-  --gold-lt:  #fdf6e3;
-  --off-white:#f7f5f0;   /* krem */
-  --line:     #d6d0c4;
-  --ink:      #1a1a18;
-  --muted:    #6b6860;
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  --court:    #1e3a8a;   /* koyu mavi — modern */
+  --court-mid:#3b82f6;
+  --court-lt: #dbeafe;
+  --clay:     #dc2626;   /* kırmızı */
+  --clay-lt:  #fef2f2;
+  --gold:     #f59e0b;
+  --gold-lt:  #fffbeb;
+  --off-white:#f8fafc;   /* daha açık */
+  --line:     #e2e8f0;
+  --ink:      #0f172a;
+  --muted:    #64748b;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   color-scheme: light;
   font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+.dark {
+  --court:    #0f172a;   /* koyu */
+  --court-mid:#1e293b;
+  --court-lt: #334155;
+  --clay:     #dc2626;
+  --clay-lt:  #450a0a;
+  --gold:     #f59e0b;
+  --gold-lt:  #451a03;
+  --off-white:#0f172a;
+  --line:     #334155;
+  --ink:      #f1f5f9;
+  --muted:    #94a3b8;
 }
 
 * { box-sizing: border-box; }

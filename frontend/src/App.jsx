@@ -21,6 +21,7 @@ function AppContent() {
   const [reportDate, setReportDate] = useState(new Date().toISOString().slice(0, 10));
   const [reportType, setReportType] = useState('daily');
   const [error, setError] = useState('');
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
 
   const hasToken = Boolean(token);
 
@@ -34,13 +35,14 @@ function AppContent() {
       setPersons(normalized);
       if (normalized.length && !selectedPerson) setSelectedPerson(normalized[0]);
     } catch (err) {
-      setError(err.error || 'Kişiler yüklenemedi');
+      handleApiError(err, 'Kişiler yüklenemedi');
     }
   };
 
   const refreshProducts = async () => {
     try {
       const data = await fetchProducts(token);
+      console.log('refreshProducts data:', data);
       // Backend array veya object döndürebilir — normalize et
       if (Array.isArray(data)) {
         const grouped = data.reduce((acc, p) => {
@@ -54,7 +56,7 @@ function AppContent() {
         setProducts(data || {});
       }
     } catch (err) {
-      setError(err.error || 'Ürünler yüklenemedi');
+      handleApiError(err, 'Ürünler yüklenemedi');
     }
   };
 
@@ -64,7 +66,7 @@ function AppContent() {
       const data = await fetchSales(token, { personId });
       setSales(data);
     } catch (err) {
-      setError(err.error || 'Satışlar yüklenemedi');
+      handleApiError(err, 'Satışlar yüklenemedi');
     }
   };
 
@@ -75,6 +77,15 @@ function AppContent() {
   useEffect(() => {
     if (selectedPerson) refreshSales(selectedPerson.id);
   }, [selectedPerson, hasToken]);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
 
   const handleLogin = async (form) => {
     setError('');
@@ -92,6 +103,10 @@ function AppContent() {
     setToken(''); setUsername('');
     setPersons([]); setSelectedPerson(null);
     setSales([]); setReport(null);
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
   };
 
   const handleAddPerson = async (name) => {
@@ -112,6 +127,25 @@ function AppContent() {
     } catch (err) { setError(err.error || 'Bakiye güncellenemedi'); }
   };
 
+  const handleInvalidToken = () => {
+    setToken('');
+    setUsername('');
+    setPersons([]);
+    setSelectedPerson(null);
+    setSales([]);
+    setReport(null);
+    setError('Oturumunuz sona erdi. Lütfen tekrar giriş yapın.');
+  };
+
+  const handleApiError = (err, fallback) => {
+    if (err?.status === 401) {
+      handleInvalidToken();
+      return true;
+    }
+    setError(err?.error || fallback);
+    return false;
+  };
+
   const handleAddSale = async (saleData) => {
     setError('');
     try {
@@ -119,7 +153,11 @@ function AppContent() {
       await refreshSales(saleData.personId);
       await refreshPersons();
       await refreshProducts();
-    } catch (err) { setError(err.error || 'Ürün kaydedilemedi'); }
+    } catch (err) {
+      if (handleApiError(err, 'Ürün kaydedilemedi')) {
+        return;
+      }
+    }
   };
 
   const handleCreateProduct = async (category, name, price) => {
@@ -127,7 +165,9 @@ function AppContent() {
     try {
       await createProduct(category, name, price, token);
       await refreshProducts();
-    } catch (err) { setError(err.error || 'Ürün oluşturulamadı'); }
+    } catch (err) {
+      handleApiError(err, 'Ürün oluşturulamadı');
+    }
   };
 
   const handleUpdateProduct = async (productId, fields) => {
@@ -135,7 +175,9 @@ function AppContent() {
     try {
       await updateProduct(productId, fields, token);
       await refreshProducts();
-    } catch (err) { setError(err.error || 'Ürün güncellenemedi'); }
+    } catch (err) {
+      handleApiError(err, 'Ürün güncellenemedi');
+    }
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -143,7 +185,14 @@ function AppContent() {
     try {
       await deleteProduct(productId, token);
       await refreshProducts();
-    } catch (err) { setError(err.error || 'Ürün silinemedi'); }
+    } catch (err) {
+      handleApiError(err, 'Ürün silinemedi');
+    }
+  };
+
+  const handleRefreshProducts = async () => {
+    setError('');
+    await refreshProducts();
   };
 
   const handleTogglePayment = async (saleId, paid) => {
@@ -151,7 +200,9 @@ function AppContent() {
     try {
       await updatePayment(saleId, paid, token);
       if (selectedPerson) await refreshSales(selectedPerson.id);
-    } catch (err) { setError(err.error || 'Ödeme durumu güncellenemedi'); }
+    } catch (err) {
+      handleApiError(err, 'Ödeme durumu güncellenemedi');
+    }
   };
 
   const handleFetchReport = async () => {
@@ -159,7 +210,9 @@ function AppContent() {
     try {
       const data = await fetchReport(reportDate, reportType, token);
       setReport(data);
-    } catch (err) { setError(err.error || 'Rapor yüklenemedi'); }
+    } catch (err) {
+      handleApiError(err, 'Rapor yüklenemedi');
+    }
   };
 
   if (!hasToken) {
@@ -198,6 +251,9 @@ function AppContent() {
             <button className={`nav-btn ${page === 'rapor' ? 'active' : ''}`} onClick={() => setPage('rapor')}>
               Rapor
             </button>
+            <button className="nav-btn" onClick={toggleDarkMode}>
+              {darkMode ? '☀️' : '🌙'}
+            </button>
             <button className="nav-btn danger" onClick={handleLogout}>
               Çıkış
             </button>
@@ -222,6 +278,7 @@ function AppContent() {
             onCreateProduct={handleCreateProduct}
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}
+            onRefreshProducts={handleRefreshProducts}
           />
         ) : (
           <Rapor
