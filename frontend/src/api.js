@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? `http://${window.location.hostname}:4000` : "");
+const baseUrl = import.meta.env.VITE_API_BASE ;
 
 // =====================
 // AUTH
