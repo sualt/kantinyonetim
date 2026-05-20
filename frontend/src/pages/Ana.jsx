@@ -6,7 +6,7 @@ import ProductPrices from '../components/ProductPrices.jsx';
 export default function Ana({ persons, selectedPerson, sales, products, onSelectPerson, onAddPerson, onAddSale, onTogglePayment, onUpdateBalance, onCreateProduct, onUpdateProduct, onDeleteProduct, onRefreshProducts }) {
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[400px_minmax(0,1fr)]">
         <div className="rounded-[32px] border border-slate-200 bg-white/85 p-6 shadow-soft backdrop-blur-xl">
           <KisiListesi
             persons={persons}

@@ -9,6 +9,7 @@ export default function KisiDetay({ sales, onTogglePayment }) {
                 <th className="px-6 py-4 font-semibold text-slate-900">Ürün</th>
                 <th className="px-6 py-4 font-semibold text-slate-900">Adet</th>
                 <th className="px-6 py-4 font-semibold text-slate-900">Ödeme</th>
+                <th className="px-6 py-4 font-semibold text-slate-900">Durum</th>
                 <th className="px-6 py-4 font-semibold text-slate-900"></th>
               </tr>
             </thead>
@@ -17,9 +18,10 @@ export default function KisiDetay({ sales, onTogglePayment }) {
                 <tr key={sale.id} className="transition hover:bg-slate-50">
                   <td className="px-6 py-4">{sale.product}</td>
                   <td className="px-6 py-4">{sale.quantity}</td>
+                  <td className="px-6 py-4">{sale.paid ? 'Ödendi' : 'Ödenmedi'}</td>
                   <td className="px-6 py-4">
                     <span className={sale.paid ? 'status-paid' : 'status-unpaid'}>
-                      {sale.paid ? 'Ödendi' : 'Ödenmedi'}
+                      {sale.paid ? 'Ödeme tamamlandı' : 'Ödeme bekliyor'}
                     </span>
                   </td>
                   <td className="px-6 py-4">

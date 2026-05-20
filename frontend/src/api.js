@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = import.meta.env.VITE_API_BASE || "https://kantin-backend-2.onrender.com";
+const baseUrl = import.meta.env.VITE_API_BASE || (import.meta.env.DEV ? `http://${window.location.hostname}:4000` : "");
 
 // =====================
 // AUTH
@@ -26,30 +26,37 @@ async function fetchJson(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...rest,
-    headers,
-  });
+  try {
+    const response = await fetch(`${baseUrl}${path}`, {
+      ...rest,
+      headers,
+    });
 
-  const body = await response.json().catch(() => null);
+    const body = await response.json().catch(() => null);
 
-  if (!response.ok) {
-    const error = body || { error: "Sunucu hatası" };
-    error.status = response.status;
-    throw error;
+    if (!response.ok) {
+      const error = body || { error: "Sunucu hatası" };
+      error.status = response.status;
+      throw error;
+    }
+
+    return body;
+  } catch (err) {
+    throw {
+      error: `Sunucuya bağlanılamadı. ${err?.message || 'Lütfen backend çalışıyor mu kontrol edin.'}`,
+      status: 0,
+    };
   }
-
-  return body;
 }
 
 // =====================
 // PERSONS
 // =====================
 export const fetchPersons = (token) =>
-  fetchJson("/kisiler", { token });
+  fetchJson("/api/kisiler", { token });
 
 export const createPerson = (name, token) =>
-  fetchJson("/kisiler", {
+  fetchJson("/api/kisiler", {
     method: "POST",
     token,
     body: JSON.stringify({ name }),
@@ -60,18 +67,18 @@ export const createPerson = (name, token) =>
 // =====================
 export const fetchSales = (token, query = {}) => {
   const params = new URLSearchParams(query).toString();
-  return fetchJson(`/islemler?${params}`, { token });
+  return fetchJson(`/api/islemler?${params}`, { token });
 };
 
 export const createSale = (data, token) =>
-  fetchJson("/islemler", {
+  fetchJson("/api/islemler", {
     method: "POST",
     token,
     body: JSON.stringify(data),
   });
 
 export const updatePayment = (saleId, paid, token) =>
-  fetchJson(`/islemler/${saleId}/payment`, {
+  fetchJson(`/api/islemler/${saleId}/payment`, {
     method: "PATCH",
     token,
     body: JSON.stringify({ paid }),
@@ -82,31 +89,31 @@ export const updatePayment = (saleId, paid, token) =>
 // =====================
 export const fetchReport = (date, type, token) => {
   const params = new URLSearchParams({ date, type }).toString();
-  return fetchJson(`/rapor?${params}`, { token });
+  return fetchJson(`/api/rapor?${params}`, { token });
 };
 
 // =====================
 // PRODUCTS
 // =====================
 export const fetchProducts = (token) =>
-  fetchJson("/urunler", { token });
+  fetchJson("/api/urunler", { token });
 
 export const createProduct = (category, name, price, token) =>
-  fetchJson("/urunler", {
+  fetchJson("/api/urunler", {
     method: "POST",
     token,
     body: JSON.stringify({ category, name, price }),
   });
 
 export const updateProduct = (productId, data, token) =>
-  fetchJson(`/urunler/${productId}`, {
+  fetchJson(`/api/urunler/${productId}`, {
     method: "PATCH",
     token,
     body: JSON.stringify(data),
   });
 
 export const deleteProduct = (productId, token) =>
-  fetchJson(`/urunler/${productId}`, {
+  fetchJson(`/api/urunler/${productId}`, {
     method: "DELETE",
     token,
   });
@@ -118,7 +125,7 @@ export const updateProductPrice = (productId, price, token) =>
 // BALANCE
 // =====================
 export const updateBalance = (personId, amount, token) =>
-  fetchJson(`/kisiler/${personId}/balance`, {
+  fetchJson(`/api/kisiler/${personId}/balance`, {
     method: "PATCH",
     token,
     body: JSON.stringify({ amount }),

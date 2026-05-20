@@ -26,6 +26,9 @@ export default function KisiListesi({ persons, selectedId, onSelect, onAddPerson
         <div className="mb-4">
           <h2 className="text-2xl font-semibold text-slate-900">Kişiler</h2>
           <p className="mt-1 text-sm text-slate-500">Kişi ekleyin, bakiye girin ve kişi seçerek işlem yapın.</p>
+          <div className="mt-3 rounded-3xl bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
+            Kişinin bakiyesi yeterliyse, ödeme yapıldı seçeneğini işaretlemeye gerek kalmadan işlem otomatik olarak ödenmiş sayılır.
+          </div>
         </div>
 
         <form onSubmit={handleAdd} className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -71,15 +74,18 @@ export default function KisiListesi({ persons, selectedId, onSelect, onAddPerson
             <button
               type="button"
               key={person.id}
-              className={`group flex w-full items-center justify-between rounded-[28px] border px-5 py-4 text-left transition ${selectedId === person.id ? 'border-indigo-500 bg-indigo-50 shadow-soft' : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/80'}`}
+              className={`person-card ${selectedId === person.id ? 'selected' : ''}`}
               onClick={() => onSelect(person)}
             >
               <div>
-                <div className="text-base font-semibold text-slate-900">{person.name}</div>
-                <div className="mt-1 text-sm text-slate-500">Oluşturma: {new Date(person.created_at).toLocaleDateString('tr-TR')}</div>
+                <div className="person-name">{person.name}</div>
+                <div className="person-meta">Oluşturma: {new Date(person.created_at).toLocaleDateString('tr-TR')}</div>
+                <div className="person-note">Bakiye durumu: {(person.balance ?? 0).toFixed(2)} TL</div>
               </div>
-              <div className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white">
-                {(person.balance ?? 0).toFixed(2)} TL
+              <div className="person-right">
+                <div className="person-balance">{(person.balance ?? 0).toFixed(2)} TL</div>
+                {person.balance > 0 && <span className="chip chip-success">Bakiye var</span>}
+                {person.balance <= 0 && <span className="chip chip-muted">Bakiye yok</span>}
               </div>
             </button>
           ))

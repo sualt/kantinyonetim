@@ -217,16 +217,12 @@ function AppContent() {
 
   if (!hasToken) {
     return (
-      <div className="app-shell" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--court)' }}>
-        <div className="card" style={{ width: '100%', maxWidth: 420 }}>
-          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🎾</div>
-            <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', margin: 0, color: 'var(--court)' }}>
-              Kantin Takip
-            </h1>
-            <p style={{ fontSize: '0.82rem', color: 'var(--muted)', margin: '0.25rem 0 0' }}>
-              Tenis Kulübü
-            </p>
+      <div className="auth-shell">
+        <div className="auth-card">
+          <div className="auth-header">
+            <div className="text-5xl" style={{ marginBottom: '0.75rem' }}>🎾</div>
+            <h1 className="auth-title">Kantin Takip</h1>
+            <p className="auth-subtitle">Hızlı ve modern kantin yönetimi; giriş yaparak hemen başlayın.</p>
           </div>
           <Login onLogin={handleLogin} error={error} />
         </div>
@@ -236,7 +232,7 @@ function AppContent() {
 
   return (
     <div className="app-shell">
-      <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <div className="app-content">
 
         {/* Top bar */}
         <div className="topbar">

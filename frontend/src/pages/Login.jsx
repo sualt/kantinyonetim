@@ -10,8 +10,8 @@ export default function Login({ onLogin, error }) {
   };
 
   return (
-    <div className="card" style={{ maxWidth: 420, margin: '80px auto' }}>
-      <h2>Giriş Yap</h2>
+    <div className="auth-card">
+      <h2 className="section-title">Giriş Yap</h2>
       {error ? <div className="error-box">{error}</div> : null}
       <form onSubmit={handleSubmit} className="input-row">
         <input
@@ -19,14 +19,16 @@ export default function Login({ onLogin, error }) {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoFocus
+          className="field-input"
         />
         <input
           type="password"
           placeholder="Parola"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="field-input"
         />
-        <button type="submit" className="primary">
+        <button type="submit" className="btn btn-primary">
           Giriş
         </button>
       </form>
