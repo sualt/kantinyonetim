@@ -31,6 +31,7 @@ function initSchema() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       person_id INTEGER NOT NULL,
       product TEXT NOT NULL,
+      price REAL NOT NULL DEFAULT 0,
       quantity INTEGER NOT NULL,
       paid INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL,
@@ -41,6 +42,7 @@ function initSchema() {
       category TEXT NOT NULL,
       name TEXT UNIQUE NOT NULL,
       price REAL NOT NULL,
+      stock INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL
     );
   `;
@@ -49,6 +51,19 @@ function initSchema() {
   const personColumns = db.prepare("PRAGMA table_info('persons')").all().map((col) => col.name);
   if (!personColumns.includes('balance')) {
     db.prepare('ALTER TABLE persons ADD COLUMN balance REAL NOT NULL DEFAULT 0').run();
+  }
+
+  const productColumns = db.prepare("PRAGMA table_info('products')").all().map((col) => col.name);
+  if (!productColumns.includes('stock')) {
+    db.prepare('ALTER TABLE products ADD COLUMN stock INTEGER NOT NULL DEFAULT 0').run();
+  }
+
+  const salesColumns = db.prepare("PRAGMA table_info('sales')").all().map((col) => col.name);
+  if (!salesColumns.includes('price')) {
+    db.prepare('ALTER TABLE sales ADD COLUMN price REAL NOT NULL DEFAULT 0').run();
+  }
+  if (!salesColumns.includes('cancelled')) {
+    db.prepare('ALTER TABLE sales ADD COLUMN cancelled INTEGER NOT NULL DEFAULT 0').run();
   }
 
   // Admin user
@@ -61,6 +76,7 @@ function initSchema() {
   // Default products - sadece ilk kez
   const productCount = db.prepare('SELECT COUNT(*) as count FROM products').get().count;
   if (productCount === 0) {
+    const defaultStock = 20;
     const defaultProducts = [
       { category: 'Sıcak İçecekler', name: 'Çay', price: 2 },
       { category: 'Sıcak İçecekler', name: 'Kahve', price: 3 },
@@ -90,12 +106,16 @@ function initSchema() {
       { category: 'Kızartma', name: 'Cips', price: 3 }
     ];
     
-    const insertStmt = db.prepare('INSERT INTO products(category, name, price, created_at) VALUES(?, ?, ?, ?)');
+    const insertStmt = db.prepare('INSERT INTO products(category, name, price, stock, created_at) VALUES(?, ?, ?, ?, ?)');
     const now = new Date().toISOString();
     for (const product of defaultProducts) {
-      insertStmt.run(product.category, product.name, product.price, now);
+      insertStmt.run(product.category, product.name, product.price, defaultStock, now);
     }
   }
+
+  // Ensure all existing products have a sensible stock value (defaultStock)
+  // This sets stock for products that currently have 0 or NULL stock.
+  db.prepare('UPDATE products SET stock = ? WHERE stock IS NULL OR stock = 0').run(20);
 }
 
 module.exports = { getDb, initDatabase: getDb };

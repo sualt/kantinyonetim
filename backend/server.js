@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -40,17 +41,35 @@ app.use('/api/auth', authRoute);
 app.use('/api/kisiler', authMiddleware, kisilerRoute);
 app.use('/api/islemler', authMiddleware, islemlerRoute);
 app.use('/api/rapor', authMiddleware, raporRoute);
-app.use('/api/urunler', authMiddleware, urunlerRoute);
+app.use('/api/urunler', urunlerRoute);
 
 /* =======================
    FRONTEND SERVE (opsiyonel)
 ======================= */
-const frontendPath = path.join(__dirname, '../frontend/dist');
+const basePath = process.pkg ? path.dirname(process.execPath) : __dirname;
+const frontendPath = process.pkg
+  ? path.join(basePath, 'frontend', 'dist')
+  : path.join(basePath, '..', 'frontend', 'dist');
+console.log('process.pkg=', !!process.pkg);
+console.log('basePath=', basePath);
+console.log('frontendPath=', frontendPath);
+console.log('frontend exists=', fs.existsSync(frontendPath));
+
+const openBrowser = (url) => {
+  if (process.env.OPEN_BROWSER === 'false') return;
+  const { exec } = require('child_process');
+  const startCmd = process.platform === 'win32' ? 'start ""' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+  exec(`${startCmd} "${url}"`, (error) => {
+    if (error) {
+      console.warn('Tarayıcı açılamadı:', error.message);
+    }
+  });
+};
 
 if (fs.existsSync(frontendPath)) {
   app.use(express.static(frontendPath));
 
-  app.get('*', (req, res) => {
+  app.use((req, res) => {
     if (req.path.startsWith('/api')) {
       return res.status(404).json({ error: 'API bulunamadı' });
     }
@@ -61,8 +80,12 @@ if (fs.existsSync(frontendPath)) {
 /* =======================
    SERVER START
 ======================= */
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
+  const url = `http://localhost:${PORT}`;
   console.log(`Kantin backend çalışıyor: ${PORT}`);
+  if (fs.existsSync(frontendPath)) {
+    openBrowser(url);
+  }
 });

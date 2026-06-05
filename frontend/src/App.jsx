@@ -5,9 +5,9 @@ import Ana from './pages/Ana.jsx';
 import Rapor from './pages/Rapor.jsx';
 import './style.css';
 import {
-  createPerson, createProduct, createSale, deleteProduct,
+  createPerson, createProduct, createSale, deleteProduct, deletePerson,
   fetchPersons, fetchProducts, fetchReport, fetchSales,
-  login, updateBalance, updatePayment, updateProduct,
+  login, updateBalance, updatePayment, updateProduct, cancelSale,
 } from './api.js';
 
 function AppContent() {
@@ -127,6 +127,22 @@ function AppContent() {
     } catch (err) { setError(err.error || 'Bakiye güncellenemedi'); }
   };
 
+  const handleDeletePerson = async (personId) => {
+    setError('');
+    try {
+      await deletePerson(personId, token);
+      setPersons((prev) => prev.filter((p) => p.id !== personId));
+      if (selectedPerson?.id === personId) {
+        const remaining = persons.filter((p) => p.id !== personId);
+        setSelectedPerson(remaining.length ? remaining[0] : null);
+        if (remaining.length) refreshSales(remaining[0].id);
+        else setSales([]);
+      }
+    } catch (err) {
+      handleApiError(err, 'Kişi silinemedi');
+    }
+  };
+
   const handleInvalidToken = () => {
     setToken('');
     setUsername('');
@@ -160,10 +176,10 @@ function AppContent() {
     }
   };
 
-  const handleCreateProduct = async (category, name, price) => {
+  const handleCreateProduct = async (category, name, price, stock) => {
     setError('');
     try {
-      await createProduct(category, name, price, token);
+      await createProduct(category, name, price, stock, token);
       await refreshProducts();
     } catch (err) {
       handleApiError(err, 'Ürün oluşturulamadı');
@@ -202,6 +218,16 @@ function AppContent() {
       if (selectedPerson) await refreshSales(selectedPerson.id);
     } catch (err) {
       handleApiError(err, 'Ödeme durumu güncellenemedi');
+    }
+  };
+
+  const handleCancelSale = async (saleId) => {
+    setError('');
+    try {
+      await cancelSale(saleId, token);
+      if (selectedPerson) await refreshSales(selectedPerson.id);
+    } catch (err) {
+      handleApiError(err, 'Sipariş iptal edilemedi');
     }
   };
 
@@ -270,7 +296,9 @@ function AppContent() {
             onAddPerson={handleAddPerson}
             onAddSale={handleAddSale}
             onTogglePayment={handleTogglePayment}
+            onCancelSale={handleCancelSale}
             onUpdateBalance={handleUpdateBalance}
+            onDeletePerson={handleDeletePerson}
             onCreateProduct={handleCreateProduct}
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}

@@ -1,9 +1,12 @@
 import { useState } from 'react';
 
-export default function KisiListesi({ persons, selectedId, onSelect, onAddPerson, onUpdateBalance }) {
+export default function KisiListesi({ persons, selectedId, onSelect, onAddPerson, onUpdateBalance, onDeletePerson }) {
   const [name, setName] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
   const [selectedPersonForBalance, setSelectedPersonForBalance] = useState('');
+  const [collapsed, setCollapsed] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name'); // 'name', 'balance', 'date'
 
   const handleAdd = (event) => {
     event.preventDefault();
@@ -19,6 +22,21 @@ export default function KisiListesi({ persons, selectedId, onSelect, onAddPerson
     setBalanceAmount('');
     setSelectedPersonForBalance('');
   };
+
+  // Filter and sort persons
+  const filteredPersons = persons
+    .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'balance':
+          return (b.balance ?? 0) - (a.balance ?? 0);
+        case 'date':
+          return new Date(b.created_at) - new Date(a.created_at);
+        case 'name':
+        default:
+          return a.name.localeCompare(b.name, 'tr-TR');
+      }
+    });
 
   return (
     <div className="space-y-6">
@@ -69,31 +87,89 @@ export default function KisiListesi({ persons, selectedId, onSelect, onAddPerson
       </div>
 
       <div className="grid gap-3">
-        {persons.length ? (
-          persons.map((person) => (
-            <button
-              type="button"
-              key={person.id}
-              className={`person-card ${selectedId === person.id ? 'selected' : ''}`}
-              onClick={() => onSelect(person)}
-            >
-              <div>
-                <div className="person-name">{person.name}</div>
-                <div className="person-meta">Oluşturma: {new Date(person.created_at).toLocaleDateString('tr-TR')}</div>
-                <div className="person-note">Bakiye durumu: {(person.balance ?? 0).toFixed(2)} TL</div>
-              </div>
-              <div className="person-right">
-                <div className="person-balance">{(person.balance ?? 0).toFixed(2)} TL</div>
-                {person.balance > 0 && <span className="chip chip-success">Bakiye var</span>}
-                {person.balance <= 0 && <span className="chip chip-muted">Bakiye yok</span>}
-              </div>
-            </button>
-          ))
-        ) : (
-          <div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
-            Henüz kayıtlı kişi yok.
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mb-2">
+          <div className="text-sm text-slate-600 font-medium">
+            {searchTerm ? `${filteredPersons.length}` : `Toplam ${persons.length}`} kişi
           </div>
-        )}
+          <div className="flex gap-2 flex-wrap">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-1 text-sm outline-none transition focus:border-indigo-500"
+            >
+              <option value="name">İsme göre</option>
+              <option value="balance">Bakiyeye göre</option>
+              <option value="date">Tarihe göre</option>
+            </select>
+            <button 
+              type="button" 
+              className="rounded-xl border border-slate-300 px-3 py-1 text-sm transition hover:bg-slate-50" 
+              onClick={() => setCollapsed(!collapsed)}
+            >
+              {collapsed ? 'Göster' : 'Gizle'}
+            </button>
+          </div>
+        </div>
+
+        {!collapsed ? (
+          <>
+            {persons.length > 0 && (
+              <input
+                type="text"
+                placeholder="Kişi ara..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            )}
+            {filteredPersons.length ? (
+              <div style={{ maxHeight: '50vh', overflowY: 'auto', display: 'grid', gap: '0.5rem' }}>
+                {filteredPersons.map((person) => (
+                  <div
+                    key={person.id}
+                    className={`person-card ${selectedId === person.id ? 'selected' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onSelect(person)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelect(person);
+                      }
+                    }}
+                  >
+                    <div>
+                      <div className="person-name">{person.name}</div>
+                      <div className="person-meta">Oluşturma: {new Date(person.created_at).toLocaleDateString('tr-TR')}</div>
+                      <div className="person-note">Bakiye durumu: {(person.balance ?? 0).toFixed(2)} TL</div>
+                    </div>
+                    <div className="person-right">
+                      <div className="person-balance">{(person.balance ?? 0).toFixed(2)} TL</div>
+                      {person.balance > 0 && <span className="chip chip-success">Bakiye var</span>}
+                      {person.balance <= 0 && <span className="chip chip-muted">Bakiye yok</span>}
+                      <button
+                        type="button"
+                        className="btn btn-danger btn-sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (window.confirm(`${person.name} silinsin mi?`)) {
+                            onDeletePerson(person.id);
+                          }
+                        }}
+                      >
+                        Sil
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-[28px] border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                {searchTerm ? 'Arama sonucu bulunamadı.' : 'Henüz kayıtlı kişi yok.'}
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
     </div>
   );

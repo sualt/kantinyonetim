@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const { getDb } = require('../db');
+const authMiddleware = require('../middleware/auth');
+
+// Ürün listesi herkese açık: GET ve OPTIONS istekleri auth gerektirmez
+router.use((req, res, next) => {
+  if (req.method === 'GET' || req.method === 'OPTIONS') return next();
+  return authMiddleware(req, res, next);
+});
 
 // Tüm ürünleri kategoriye göre gruplayarak döndür
 router.get('/', (req, res) => {
   console.log('GET /api/urunler called');
   const db = getDb();
-  const products = db.prepare('SELECT id, category, name, price FROM products ORDER BY category, name').all();
+  const products = db.prepare('SELECT id, category, name, price, stock FROM products ORDER BY category, name').all();
   console.log('Products from DB:', products.length);
 
   const grouped = {};
@@ -18,6 +25,7 @@ router.get('/', (req, res) => {
       id: product.id,
       name: product.name,
       price: product.price,
+      stock: product.stock,
     });
   }
 
@@ -33,7 +41,7 @@ router.patch('/:productId', (req, res) => {
     return res.status(400).json({ error: 'Geçerli ürün kimliği giriniz' });
   }
 
-  const { price, name, category } = req.body || {};
+  const { price, name, category, stock } = req.body || {};
   const updates = [];
   const values = [];
 
@@ -43,6 +51,14 @@ router.patch('/:productId', (req, res) => {
     }
     updates.push('price = ?');
     values.push(price);
+  }
+
+  if (stock !== undefined) {
+    if (!Number.isInteger(stock) || stock < 0) {
+      return res.status(400).json({ error: 'Geçerli bir stok değeri giriniz' });
+    }
+    updates.push('stock = ?');
+    values.push(stock);
   }
 
   if (typeof name === 'string' && name.trim()) {
@@ -69,7 +85,7 @@ router.patch('/:productId', (req, res) => {
       return res.status(404).json({ error: 'Ürün bulunamadı' });
     }
 
-    const updated = db.prepare('SELECT id, category, name, price FROM products WHERE id = ?').get(productId);
+    const updated = db.prepare('SELECT id, category, name, price, stock FROM products WHERE id = ?').get(productId);
     res.json(updated);
   } catch (err) {
     if (err.message.includes('UNIQUE')) {
@@ -81,23 +97,24 @@ router.patch('/:productId', (req, res) => {
 
 // Ürün ekle
 router.post('/', (req, res) => {
-  const { category, name, price } = req.body || {};
+  const { category, name, price, stock } = req.body || {};
   
-  if (!category || !name || typeof price !== 'number' || price < 0) {
-    return res.status(400).json({ error: 'Kategori, ürün adı ve geçerli bir fiyat giriniz' });
+  if (!category || !name || typeof price !== 'number' || price < 0 || stock === undefined || !Number.isInteger(stock) || stock < 0) {
+    return res.status(400).json({ error: 'Kategori, ürün adı, fiyat ve geçerli bir stok değeri giriniz' });
   }
 
   const db = getDb();
   try {
     const now = new Date().toISOString();
-    const result = db.prepare('INSERT INTO products(category, name, price, created_at) VALUES(?, ?, ?, ?)')
-      .run(category, name, price, now);
+    const result = db.prepare('INSERT INTO products(category, name, price, stock, created_at) VALUES(?, ?, ?, ?, ?)')
+      .run(category, name, price, stock, now);
     
     res.status(201).json({
       id: result.lastInsertRowid,
       category,
       name,
-      price
+      price,
+      stock
     });
   } catch (err) {
     if (err.message.includes('UNIQUE')) {

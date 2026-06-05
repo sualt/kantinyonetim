@@ -13,18 +13,28 @@ Bu proje, Node.js / Express backend ve Vite / React frontend içeren tam bir kan
    npm install
    ```
 
-2. Frontend üretim dosyalarını oluşturun:
+2. Gerekli ortam değişkenlerini ayarlayın.
+   - `backend/.env.example` dosyasını kopyalayarak `backend/.env` oluşturun.
+   - `frontend/.env.example` dosyasını kopyalayarak `frontend/.env` oluşturun.
+
+3. Frontend üretim dosyalarını oluşturun:
 
    ```powershell
    cd frontend
    npm run build
    ```
 
-3. Backend çalıştırın:
+4. Backend çalıştırın:
 
    ```powershell
    cd ../backend
    npm start
+   ```
+
+5. Tarayıcıda açın:
+
+   ```text
+   http://localhost:4000
    ```
 
 ## Geliştirme modu
@@ -43,7 +53,8 @@ cd frontend
 npm run dev
 ```
 
-> Frontend ayrı çalışıyorsa `frontend/.env` içinde `VITE_API_BASE=http://localhost:4000` olarak ayarlayın.
+> Eğer frontend ayrı bir Vite sunucusunda çalışıyorsa `frontend/.env` içinde `VITE_API_BASE=http://localhost:4000` olarak ayarlayın.
+> Eğer frontend, backend tarafından aynı origin üzerinde servis edilecekse `VITE_API_BASE` boş bırakılabilir.
 
 ## Deploy için önemli notlar
 
@@ -51,40 +62,38 @@ npm run dev
 - Bu yüzden prod ortamında önce `frontend` dizininde `npm run build` çalıştırılmalı.
 - `backend/.env.example` ve `frontend/.env.example` dosyalarını kullanarak `JWT_SECRET`, `PORT` ve `VITE_API_BASE` değişkenlerini ayarlayın.
 
-## Windows `.exe` oluşturma
+## Testler ve Doğrulama
 
-Backend için derlenmiş bir Windows çalıştırılabilir dosya oluşturmak üzere aşağıdakileri çalıştırın:
+Projede temel işlevleri kontrol etmek için aşağıdaki test komutları mevcuttur:
 
 ```powershell
 cd backend
-npm install
-npm run build:exe
+node test-refund.js
+node test-export.js
+node test-stock.js
 ```
 
-Bu komut `dist/kantin.exe` dosyasını oluşturur ve aynı zamanda `dist/frontend/dist` altına frontend üretim dosyalarını, `dist/kantin.db` dosyasını da kopyalar.
+- `test-refund.js`: ödeme yapıldıktan sonra bakiye düşme ve ödeme iptali sonrası bakiye geri gelme senaryosunu test eder.
+- `test-export.js`: rapor dışa aktarma CSV işlevini doğrular.
+- `test-stock.js`: tüm ürünlerin stok değerlerinin sıfır olmadığını kontrol eder.
 
-`dist` klasöründeki yapılandırma şu şekilde olmalıdır:
-
-- `dist/kantin.exe`
-- `dist/kantin.db`
-- `dist/frontend/dist/...`
-
-`dist/kantin.exe` dosyasını çalıştırdığınızda backend otomatik olarak `http://localhost:4000` adresini açar.
+Yeni eklenen `Siparişi iptal et` özelliği, satış kaydını iptal ederken stok ve ödenmiş bakiyeyi doğru şekilde geri yükler.
 
 ## Vercel demo deploy
 
-Bu repo için Vercel demo deploy ayarı `vercel.json` ile hazırlandı. Ancak Vercel üzerinden tam işlevsel bir demo çalıştırmak için backend servisinizin herkese açık bir URL'de olması gerekir.
+Bu repo için `frontend` tarafını Vercel üzerinde statik site olarak deploy etmek mümkündür. Backend ise `better-sqlite3` kullandığı için Vercel serverless ortamında doğrudan çalışmayabilir. Bu nedenle Vercel deployu sadece frontend için düşünülmelidir.
 
 1. Vercel projesini oluşturun veya GitHub entegrasyonu kullanın.
-2. `VITE_API_BASE` ortam değişkenini Vercel ayarlarında backend URL'inize ayarlayın. Örnek:
+2. `frontend` dizini deploy edilsin.
+3. Vercel ayarlarında `VITE_API_BASE` ortam değişkenini backend URL'inize ayarlayın. Örnek:
 
    ```text
    VITE_API_BASE=https://your-backend.example.com
    ```
 
-3. Vercel, `frontend` klasörünü build ederek otomatik olarak deploy edecektir.
+4. Backend’i kendinizin barındırdığı bir sunucuda çalıştırın veya yerelde kullanın.
 
-> Eğer backend Vercel üzerinde çalıştırılmayacaksa, frontend deploy sırasında `VITE_API_BASE` değerinin dışarıdaki backend adresini işaret ettiğinden emin olun.
+> Not: Eğer frontend ile backend aynı origin üzerinde hizmet verilecekse, `VITE_API_BASE` boş bırakabilirsiniz.
 
 ## Varsayılan giriş
 

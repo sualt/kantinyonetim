@@ -1,4 +1,8 @@
+import { useAuth } from '../context/AuthContext.jsx';
+import { exportReport } from '../api.js';
+
 export default function Rapor({ report, date, type, onDateChange, onTypeChange, onFetchReport }) {
+  const { token } = useAuth();
   return (
     <div className="space-y-6 rounded-[32px] border border-slate-200 bg-white/85 p-6 shadow-soft">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -33,6 +37,27 @@ export default function Rapor({ report, date, type, onDateChange, onTypeChange, 
             className="rounded-3xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700"
           >
             Raporu Görüntüle
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const blob = await exportReport(date, type, token);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `rapor-${type}-${(type === 'monthly' ? date.slice(0,7) : date)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+              } catch (err) {
+                alert(err?.error || 'Rapor dışa aktarılamadı');
+              }
+            }}
+            className="rounded-3xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Excel'e Aktar
           </button>
         </div>
       </div>

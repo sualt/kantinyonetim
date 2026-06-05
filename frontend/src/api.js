@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = import.meta.env.VITE_API_BASE ;
+const baseUrl = import.meta.env.VITE_API_BASE || (typeof window !== 'undefined' ? window.location.origin : '');
 
 // =====================
 // AUTH
@@ -84,6 +84,12 @@ export const updatePayment = (saleId, paid, token) =>
     body: JSON.stringify({ paid }),
   });
 
+export const cancelSale = (saleId, token) =>
+  fetchJson(`/api/islemler/${saleId}/cancel`, {
+    method: "PATCH",
+    token,
+  });
+
 // =====================
 // REPORT
 // =====================
@@ -92,17 +98,32 @@ export const fetchReport = (date, type, token) => {
   return fetchJson(`/api/rapor?${params}`, { token });
 };
 
+export async function exportReport(date, type, token) {
+  const params = new URLSearchParams({ date, type }).toString();
+  const res = await fetch(`${baseUrl}/api/rapor/export?${params}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const err = body || { error: 'Sunucu hatası' };
+    err.status = res.status;
+    throw err;
+  }
+  const blob = await res.blob();
+  return blob;
+}
+
 // =====================
 // PRODUCTS
 // =====================
 export const fetchProducts = (token) =>
   fetchJson("/api/urunler", { token });
 
-export const createProduct = (category, name, price, token) =>
+export const createProduct = (category, name, price, stock, token) =>
   fetchJson("/api/urunler", {
     method: "POST",
     token,
-    body: JSON.stringify({ category, name, price }),
+    body: JSON.stringify({ category, name, price, stock }),
   });
 
 export const updateProduct = (productId, data, token) =>
@@ -114,6 +135,12 @@ export const updateProduct = (productId, data, token) =>
 
 export const deleteProduct = (productId, token) =>
   fetchJson(`/api/urunler/${productId}`, {
+    method: "DELETE",
+    token,
+  });
+
+export const deletePerson = (personId, token) =>
+  fetchJson(`/api/kisiler/${personId}`, {
     method: "DELETE",
     token,
   });

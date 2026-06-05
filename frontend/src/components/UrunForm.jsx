@@ -5,21 +5,76 @@ export default function UrunForm({ persons, selectedPerson, onAddSale, products 
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [paid, setPaid] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [localError, setLocalError] = useState('');
 
   useEffect(() => {
     if (selectedPerson) {
       setPersonId(selectedPerson.id);
     }
+    setCartItems([]);
   }, [selectedPerson]);
 
   const allProducts = useMemo(() => Object.values(products).flat(), [products]);
 
   const selectedProduct = allProducts.find((item) => item.id === Number(productId));
 
+  const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleAddItem = () => {
+    if (!selectedProduct || quantity < 1) return;
+    const qty = Number(quantity);
+    if (qty < 1) return;
+    if (selectedProduct.stock < qty) return;
+
+    setCartItems((prev) => {
+      const existing = prev.find((item) => item.id === selectedProduct.id);
+      if (existing) {
+        const newQuantity = existing.quantity + qty;
+        if (selectedProduct.stock < newQuantity) return prev;
+        return prev.map((item) => item.id === selectedProduct.id ? { ...item, quantity: newQuantity } : item);
+      }
+      return [...prev, {
+        id: selectedProduct.id,
+        name: selectedProduct.name,
+        price: selectedProduct.price,
+        quantity: qty,
+        stock: selectedProduct.stock,
+      }];
+    });
+
+    setProductId('');
+    setQuantity(1);
+  };
+
+  const handleRemoveItem = (id) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (!personId || !selectedProduct || quantity < 1) return;
-    onAddSale({ personId, product: selectedProduct.name, quantity: Number(quantity), paid });
+    if (!personId) return;
+    setLocalError('');
+
+    if (cartItems.length > 0) {
+      onAddSale({
+        personId,
+        paid,
+        items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity })),
+      });
+    } else if (selectedProduct && quantity >= 1) {
+      // Validate stock before submitting single-item sale
+      if (selectedProduct.stock < Number(quantity)) {
+        setLocalError(`Seçili ürün için yeterli stok yok. Mevcut: ${selectedProduct.stock}`);
+        return;
+      }
+
+      onAddSale({ personId, product: selectedProduct.name, quantity: Number(quantity), paid });
+    } else {
+      return;
+    }
+
+    setCartItems([]);
     setProductId('');
     setQuantity(1);
     setPaid(false);
@@ -73,19 +128,48 @@ export default function UrunForm({ persons, selectedPerson, onAddSale, products 
               placeholder="Adet"
               className="rounded-3xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
             />
+            <button
+              type="button"
+              onClick={handleAddItem}
+              className="rounded-3xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+            >
+              Sepete ekle
+            </button>
             <label className="flex items-center gap-3 rounded-3xl border border-slate-300 bg-white px-4 py-3 text-slate-900">
               <input type="checkbox" checked={paid} onChange={(e) => setPaid(e.target.checked)} className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
               <span className="text-sm font-medium text-slate-700">Ödeme yapıldı</span>
             </label>
           </div>
           <button type="submit" className="rounded-3xl bg-indigo-600 px-5 py-4 text-sm font-semibold text-white transition hover:bg-indigo-700">
-            Kaydet
+            {cartItems.length > 0 ? 'Sepeti Kaydet' : 'Kaydet'}
           </button>
         </div>
 
+        {cartItems.length > 0 ? (
+          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <div className="mb-3 font-semibold">Sepet</div>
+            <div className="space-y-2">
+              {cartItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3">
+                  <div>
+                    <div className="font-semibold">{item.name}</div>
+                    <div className="text-xs text-slate-500">Adet: {item.quantity} · Fiyat: {item.price.toFixed(2)} TL · Stok: {item.stock}</div>
+                  </div>
+                  <button type="button" onClick={() => handleRemoveItem(item.id)} className="text-sm font-semibold text-red-600 hover:text-red-800">Kaldır</button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 text-right font-semibold">Toplam: {cartTotal.toFixed(2)} TL</div>
+          </div>
+        ) : null}
+
+        {localError ? (
+          <div className="text-sm text-red-600">{localError}</div>
+        ) : null}
+
         {selectedProduct ? (
           <div className="rounded-3xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-900">
-            Seçili ürün: <strong>{selectedProduct.name}</strong> — Fiyat: <strong>{selectedProduct.price.toFixed(2)} TL</strong> · Toplam: <strong>{(selectedProduct.price * quantity).toFixed(2)} TL</strong>
+            Seçili ürün: <strong>{selectedProduct.name}</strong> — Fiyat: <strong>{selectedProduct.price.toFixed(2)} TL</strong> · Stok: <strong>{selectedProduct.stock}</strong> · Toplam: <strong>{(selectedProduct.price * quantity).toFixed(2)} TL</strong>
           </div>
         ) : null}
       </form>

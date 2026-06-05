@@ -44,4 +44,26 @@ router.patch('/:id/balance', (req, res) => {
   res.json(person);
 });
 
+router.delete('/:id', (req, res) => {
+  const id = Number(req.params.id);
+  if (!id) {
+    return res.status(400).json({ error: 'Geçerli kişi kimliği giriniz' });
+  }
+
+  const db = getDb();
+  const person = db.prepare('SELECT id FROM persons WHERE id = ?').get(id);
+  if (!person) {
+    return res.status(404).json({ error: 'Kişi bulunamadı' });
+  }
+
+  const deleteSales = db.prepare('DELETE FROM sales WHERE person_id = ?').run(id);
+  const result = db.prepare('DELETE FROM persons WHERE id = ?').run(id);
+
+  if (result.changes === 0) {
+    return res.status(500).json({ error: 'Kişi silinemedi' });
+  }
+
+  res.json({ message: 'Kişi silindi', deletedSales: deleteSales.changes });
+});
+
 module.exports = router;

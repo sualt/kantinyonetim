@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 
 export default function ProductPrices({ products, onCreateProduct, onUpdateProduct, onDeleteProduct, onRefreshProducts }) {
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [editForm, setEditForm] = useState({ category: '', name: '', price: '' });
-  const [newProduct, setNewProduct] = useState({ category: '', name: '', price: '' });
+  const [editForm, setEditForm] = useState({ category: '', name: '', price: '', stock: '' });
+  const [newProduct, setNewProduct] = useState({ category: '', name: '', price: '', stock: '' });
   const [mode, setMode] = useState('edit'); // 'edit' | 'add'
   const [feedback, setFeedback] = useState(null); // { msg, ok }
 
@@ -39,6 +39,7 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
       category: product.category ?? '',
       name: product.name ?? '',
       price: String(product.price ?? ''),
+      stock: String(product.stock ?? ''),
     });
   }, []);
 
@@ -47,20 +48,21 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
     const category = editForm.category.trim();
     const name = editForm.name.trim();
     const price = parseFloat(editForm.price);
+    const stock = Number(editForm.stock);
 
-    if (!category || !name || Number.isNaN(price) || price < 0) {
+    if (!category || !name || Number.isNaN(price) || price < 0 || Number.isNaN(stock) || !Number.isInteger(stock) || stock < 0) {
       flash('Lütfen tüm alanları doğru doldurun.', false);
       return;
     }
 
     try {
-      console.log('Updating product:', selectedProduct.id, { category, name, price });
-      await onUpdateProduct(selectedProduct.id, { category, name, price });
+      console.log('Updating product:', selectedProduct.id, { category, name, price, stock });
+      await onUpdateProduct(selectedProduct.id, { category, name, price, stock });
       console.log('Product updated, refreshing...');
       if (onRefreshProducts) await onRefreshProducts();
       flash('Ürün güncellendi.');
       setSelectedProduct(null);
-      setEditForm({ category: '', name: '', price: '' });
+      setEditForm({ category: '', name: '', price: '', stock: '' });
     } catch (err) {
       console.error('Error updating product:', err);
       flash('Güncelleme başarısız: ' + (err?.error || err?.message || 'Bilinmeyen hata'), false);
@@ -77,7 +79,7 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
       if (onRefreshProducts) await onRefreshProducts();
       flash('Ürün silindi.');
       setSelectedProduct(null);
-      setEditForm({ category: '', name: '', price: '' });
+      setEditForm({ category: '', name: '', price: '', stock: '' });
     } catch (err) {
       console.error('Error deleting product:', err);
       flash('Silme başarısız: ' + (err?.error || err?.message || 'Bilinmeyen hata'), false);
@@ -89,17 +91,18 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
     const name = newProduct.name.trim();
     const price = parseFloat(newProduct.price);
 
-    if (!category || !name || Number.isNaN(price) || price < 0) {
+    const stock = Number(newProduct.stock);
+    if (!category || !name || Number.isNaN(price) || price < 0 || Number.isNaN(stock) || !Number.isInteger(stock) || stock < 0) {
       flash('Lütfen tüm alanları doğru doldurun.', false);
       return;
     }
 
     try {
-      console.log('Creating product:', { category, name, price });
-      await onCreateProduct(category, name, price);
+      console.log('Creating product:', { category, name, price, stock });
+      await onCreateProduct(category, name, price, stock);
       console.log('Product created, refreshing...');
       if (onRefreshProducts) await onRefreshProducts();
-      setNewProduct({ category: '', name: '', price: '' });
+      setNewProduct({ category: '', name: '', price: '', stock: '' });
       flash('Ürün eklendi.');
       setMode('edit');
     } catch (err) {
@@ -170,7 +173,7 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
                   onClick={() => { handleSelectProduct(item); setMode('edit'); }}
                 >
                   <span className="product-item-name">{item.name}</span>
-                  <span className="product-item-price">{Number(item.price).toFixed(2)} ₺</span>
+                  <span className="product-item-meta">{Number(item.price).toFixed(2)} ₺ · Stok: {item.stock}</span>
                 </button>
               ))}
             </div>
@@ -221,6 +224,18 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
                     />
                   </div>
 
+                  <div className="form-field">
+                    <label className="form-label">Stok</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={editForm.stock}
+                      onChange={(e) => setEditForm((p) => ({ ...p, stock: e.target.value }))}
+                      className="form-input"
+                    />
+                  </div>
+
                   <div className="form-actions">
                     <button type="button" className="btn-save" onClick={handleSaveProduct}>
                       Kaydet
@@ -233,7 +248,7 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
                     <button
                       type="button"
                       className="btn-cancel"
-                      onClick={() => { setSelectedProduct(null); setEditForm({ category: '', name: '', price: '' }); }}
+                      onClick={() => { setSelectedProduct(null); setEditForm({ category: '', name: '', price: '', stock: '' }); }}
                     >
                       İptal
                     </button>
@@ -287,6 +302,19 @@ export default function ProductPrices({ products, onCreateProduct, onUpdateProdu
                   placeholder="0.00"
                   value={newProduct.price}
                   onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-field">
+                <label className="form-label">Stok</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="0"
+                  value={newProduct.stock}
+                  onChange={(e) => setNewProduct((p) => ({ ...p, stock: e.target.value }))}
                   className="form-input"
                 />
               </div>
